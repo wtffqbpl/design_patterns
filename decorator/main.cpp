@@ -92,10 +92,7 @@ int main()
 {
   Pancake* pan = new EggPancake();
   // 增加额外的东西
-  Potato potato = Potato(pan);
-  pan = (Pancake*)&potato;
-  Bacon bacon = Bacon(pan);
-  pan = (Pancake*)&bacon;
+  pan = (Pancake*)(new Bacon(new Potato(pan)));
 
   std::cout << pan->getDescription() << ", $: " << pan->cost() << std::endl;
 
