@@ -53,8 +53,10 @@ public:
    */
   void DoSOmeBusinessLogic() const {
     // ...
-    std::cout << "Context: Sorting data using the strategy (not sure how it'll do it)\n";
-    std::string result = this->strategy_->DoAlgorithm(std::vector<std::string> {"a", "e", "c", "b", "d"});
+    std::cout <<
+      "Context: Sorting data using the strategy (not sure how it'll do it)\n";
+    std::string result = this->strategy_->DoAlgorithm(
+        std::vector<std::string> {"a", "e", "c", "b", "d"});
     std::cout << result << "\n";
     // ...
   }
@@ -68,8 +70,9 @@ class ConcreteStrategyA : public Strategy {
 public:
   std::string DoAlgorithm(const std::vector<std::string> &data) const override {
     std::string result;
-    std::for_each(std::begin(data), std::end(data), [&result](const std::string &letter) {
-        result += letter;
+    std::for_each(std::begin(data), std::end(data),
+        [&result](const std::string &letter) {
+          result += letter;
         });
     std::sort(std::begin(result), std::end(result));
 
@@ -80,11 +83,13 @@ public:
 class ConcreteStrategyB : public Strategy {
   std::string DoAlgorithm(const std::vector<std::string> &data) const override {
     std::string result;
-    std::for_each(std::begin(data), std::end(data), [&result](const std::string &letter) {
-        result += letter;
+    std::for_each(std::begin(data), std::end(data),
+        [&result](const std::string &letter) {
+          result += letter;
         });
 
     std::sort(std::begin(result), std::end(result));
+
     for (int i = 0; i < result.size() / 2; ++i) {
       std::swap(result[i], result[result.size() - i - 1]);
     }
@@ -99,7 +104,6 @@ class ConcreteStrategyB : public Strategy {
  * the right choice.
  */
 void ClientCode() {
-
   Context *context = new Context(new ConcreteStrategyA);
   std::cout << "Client: Strategy is set to normal sorting.\n";
   context->DoSOmeBusinessLogic();
