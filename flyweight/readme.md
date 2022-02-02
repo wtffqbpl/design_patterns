@@ -1,3 +1,17 @@
+# Flyweight Design Pattern
+
+## Intent
+
+<font color="red"><b>To avoid redundancy when storing data.</b></font>
+
+* Flyweight Design Pattern is quite simply a space optimization technique.
+That allows you to use less memory by storing some of the common data to several
+items or serveral objects.
+
+* We store it externally and simply refer(by reference, pointer or any other
+mechanism) to it when we actually need it.
+
+
 ## Benefits of Flyweight Design Pattern
 
 1. Facilitates the reuse of many fine-grained object, making the utilization of larg
