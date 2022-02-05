@@ -17,7 +17,7 @@ struct Command {
   virtual void execute() = 0;
 };
 
-struct BanckAccountCommand : Command {
+struct BankAccountCommand : Command {
   enum class Action : bool {
     deposit,
     withdraw
@@ -27,7 +27,7 @@ struct BanckAccountCommand : Command {
   Action m_action;
   int32_t m_amount;
  
-  BanckAccountCommand(BankAccount &ac, Action a, int32_t amnt) :
+  BankAccountCommand(BankAccount &ac, Action a, int32_t amnt) :
     m_ac(ac), m_action(a), m_amount(amnt) {}
 
   void execute() {
@@ -41,9 +41,9 @@ struct BanckAccountCommand : Command {
   }
 };
 
-struct CompositeBankAccountCommand : std::vector<BanckAccountCommand>, Command {
+struct CompositeBankAccountCommand : std::vector<BankAccountCommand>, Command {
   CompositeBankAccountCommand(const std::initializer_list<value_type>& items) :
-    std::vector<BanckAccountCommand>(items) {}
+    std::vector<BankAccountCommand>(items) {}
 
   void execute() {
     for (auto &cmd : *this) {
@@ -63,8 +63,8 @@ int main() {
   BankAccount ba2{1000};
 
   CompositeBankAccountCommand commands {
-    BanckAccountCommand{ba1, BanckAccountCommand::Action::withdraw, 200},
-    BanckAccountCommand{ba2, BanckAccountCommand::Action::deposit, 200}
+    BankAccountCommand{ba1, BankAccountCommand::Action::withdraw, 200},
+    BankAccountCommand{ba2, BankAccountCommand::Action::deposit, 200}
   };
 
   commands.execute();
