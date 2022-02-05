@@ -34,6 +34,27 @@ struct BanckAccountCommand : Command {
     (m_action == Action::deposit) ?
       m_ac.deposit(m_amount) : m_ac.withdraw(m_amount);
   }
+
+  void undo() {
+    (m_action == Action::deposit) ?
+      m_ac.withdraw(m_amount) : m_ac.deposit(m_amount);
+  }
+};
+
+struct CompositeBankAccountCommand : std::vector<BanckAccountCommand>, Command {
+  CompositeBankAccountCommand(const std::initializer_list<value_type>& items) :
+    std::vector<BanckAccountCommand>(items) {}
+
+  void execute() {
+    for (auto &cmd : *this) {
+      cmd.execute();
+    }
+  }
+
+    void undo() {
+      for (auto &cmd : *this)
+        cmd.undo();
+    }
 };
 
 int main() {
@@ -41,13 +62,13 @@ int main() {
   BankAccount ba1{1000};
   BankAccount ba2{1000};
 
-  std::vector<BanckAccountCommand> commands {
+  CompositeBankAccountCommand commands {
     BanckAccountCommand{ba1, BanckAccountCommand::Action::withdraw, 200},
     BanckAccountCommand{ba2, BanckAccountCommand::Action::deposit, 200}
   };
 
-  for (auto &cmd : commands)
-    cmd.execute();
+  commands.execute();
+  commands.undo();
 
   std::cout << ba1.m_banance << std::endl;
   std::cout << ba2.m_banance << std::endl;
