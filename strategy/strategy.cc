@@ -1,8 +1,9 @@
+#include <gtest/gtest.h>
 #include <iostream>
-#include <string>
 #include <vector>
 #include <algorithm>
 
+namespace strategy {
 /**
  * The Strategy interface declares operations common to all supported versions
  * of some algorithm.
@@ -10,11 +11,11 @@
  * The Context uses this interface to call the algorithm defined by Concrete
  * Strategies.
  */
-
 class Strategy {
 public:
-  virtual ~Strategy() {}
-  virtual std::string DoAlgorithm(const std::vector<std::string> &data) const = 0;
+  virtual ~Strategy() = default;
+  [[nodiscard]] virtual std::string
+  DoAlgorithm(const std::vector<std::string> &data) const = 0;
 };
 
 /**
@@ -29,16 +30,13 @@ class Context {
 private:
   Strategy *strategy_;
   /**
-   * Ususally, the Context accepts a strategy through the constructor, but also
+   * Usually, the Context accepts a strategy through the constructor, but also
    * provides a setter to change it at runtime.
    */
 public:
-  Context(Strategy *strategy = nullptr) : strategy_(strategy) {}
+  explicit Context(Strategy *strategy = nullptr) : strategy_(strategy) {}
+  ~Context() { delete this->strategy_; }
 
-  ~Context() {
-    delete this->strategy_;
-  }
-  
   /**
    * Usually, the Context allows replacing a Strategy object at runtime.
    */
@@ -53,10 +51,9 @@ public:
    */
   void DoSOmeBusinessLogic() const {
     // ...
-    std::cout <<
-      "Context: Sorting data using the strategy (not sure how it'll do it)\n";
+    std::cout << "Context: Sorting data using the strategy (not sure how it'll do it)\n";
     std::string result = this->strategy_->DoAlgorithm(
-        std::vector<std::string> {"a", "e", "c", "b", "d"});
+        std::vector<std::string>{"a", "e", "c", "b", "d"});
     std::cout << result << "\n";
     // ...
   }
@@ -68,25 +65,21 @@ public:
  */
 class ConcreteStrategyA : public Strategy {
 public:
-  std::string DoAlgorithm(const std::vector<std::string> &data) const override {
+  [[nodiscard]] std::string DoAlgorithm(const std::vector<std::string> &data) const override {
     std::string result;
     std::for_each(std::begin(data), std::end(data),
-        [&result](const std::string &letter) {
-          result += letter;
-        });
+                  [&result](const std::string &letter) { result += letter; });
     std::sort(std::begin(result), std::end(result));
 
-    return result;
+    return std::move(result);
   }
 };
 
 class ConcreteStrategyB : public Strategy {
-  std::string DoAlgorithm(const std::vector<std::string> &data) const override {
+  [[nodiscard]] std::string DoAlgorithm(const std::vector<std::string> &data) const override {
     std::string result;
     std::for_each(std::begin(data), std::end(data),
-        [&result](const std::string &letter) {
-          result += letter;
-        });
+                  [&result](const std::string &letter) { result += letter; });
 
     std::sort(std::begin(result), std::end(result));
 
@@ -94,7 +87,7 @@ class ConcreteStrategyB : public Strategy {
       std::swap(result[i], result[result.size() - i - 1]);
     }
 
-    return result;
+    return std::move(result);
   }
 };
 
@@ -104,7 +97,7 @@ class ConcreteStrategyB : public Strategy {
  * the right choice.
  */
 void ClientCode() {
-  Context *context = new Context(new ConcreteStrategyA);
+  auto *context = new Context(new ConcreteStrategyA);
   std::cout << "Client: Strategy is set to normal sorting.\n";
   context->DoSOmeBusinessLogic();
   std::cout << "\n";
@@ -115,10 +108,9 @@ void ClientCode() {
   delete context;
 }
 
-int main() {
+} // end of namespace strategy
+
+TEST(strategy, basic_demo) {
+  using namespace strategy;
   ClientCode();
-
-  return 0;
 }
-
-

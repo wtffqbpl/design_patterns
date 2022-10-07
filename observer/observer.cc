@@ -1,7 +1,101 @@
+#include <gtest/gtest.h>
 #include <iostream>
-#include <string>
 #include <list>
+#include <string>
+#include <utility>
 
+namespace observer {
+class Observer;
+
+class Subject {
+public:
+  virtual ~Subject() = default;
+  virtual void registerObsvr(Observer *obsvr) = 0;
+  virtual void removeObsvr(Observer *obsvr) = 0;
+  virtual void notifyObsvrs(const std::string &msg) = 0;
+};
+
+class Observer {
+public:
+  virtual ~Observer() = default;
+  virtual void Update(const std::string &msg) = 0;
+  virtual std::string getName() const = 0;
+};
+
+class QQGroup : public Subject {
+public:
+  QQGroup() { _observers = new std::list<Observer *>(); }
+  void registerObsvr(Observer *obsvr) override;
+  void removeObsvr(Observer *obsvr) override;
+  void notifyObsvrs(const std::string &msg) override;
+
+private:
+  std::list<Observer *> *_observers;
+};
+
+void QQGroup::registerObsvr(Observer *obsvr) { _observers->push_back(obsvr); }
+
+void QQGroup::removeObsvr(Observer *obsvr) {
+  if (!_observers->empty())
+    _observers->remove(obsvr);
+}
+
+void QQGroup::notifyObsvrs(const std::string &msg) {
+  std::cout << "Group msg: " << msg << std::endl;
+  auto iter = _observers->begin();
+
+  for (; iter != _observers->end(); ++iter) {
+    (*iter)->Update(msg);
+  }
+}
+
+class RoomMate : public Observer {
+private:
+  std::string name_;
+  std::string action_;
+  std::string now_;
+
+public:
+  explicit RoomMate(std::string name, std::string now, std::string action)
+    : name_(std::move(name)), action_(std::move(action)), now_(std::move(now)) {}
+
+  void Update(const std::string &msg) override;
+  [[nodiscard]] std::string getName() const override { return name_; };
+};
+
+void RoomMate::Update(const std::string &msg) {
+  std::cout << "This is " << name_ << std::endl;
+  if (msg == "checked")
+    std::cout << "action: " << action_ << std::endl << std::endl;
+  else
+    std::cout << "Go on: " << now_ << std::endl << std::endl;
+}
+
+} // end of namespace observer
+
+TEST(observer, basic_demo) {
+  using namespace observer;
+
+  auto *B = new RoomMate("B",
+      "sleeping",
+      "get dressed and run to classroom");
+  auto *C = new RoomMate("C",
+      "playing games",
+      "pay the fee and run to classroom");
+  auto *D = new RoomMate("D",
+      "shopping with girl friend",
+      "go back to school and be worried about girl friend's agnry");
+
+  auto *qqgroup = new QQGroup();
+  qqgroup->registerObsvr(B);
+  qqgroup->registerObsvr(C);
+  qqgroup->registerObsvr(D);
+
+  qqgroup->notifyObsvrs("not checked");
+  qqgroup->notifyObsvrs("checked");
+}
+
+namespace observer_new {
 /**
  * Observer Design Pattern
  * Intent: Lets you define a subscription mechanism to notify multiple objects
@@ -15,13 +109,13 @@
 
 class IObserver {
 public:
-  virtual ~IObserver() {};
+  virtual ~IObserver() = default;
   virtual void Update(const std::string &message_from_subject) = 0;
 };
 
 class ISubject {
 public:
-  virtual ~ISubject() {};
+  virtual ~ISubject() = default;
   virtual void Attach(IObserver *observer) = 0;
   virtual void Detach(IObserver *observer) = 0;
   virtual void Notify() = 0;
@@ -34,7 +128,7 @@ public:
 
 class Subject : public ISubject {
 public:
-  virtual ~Subject() {
+  ~Subject() override {
     std::cout << "Goodbye, I was the Subject.\n";
   }
 
@@ -50,8 +144,8 @@ public:
   }
 
   void Notify() override {
-    std::list<IObserver *>::iterator iterator = list_observer_.begin();
-    HowManyOberser();
+    auto iterator = list_observer_.begin();
+    HowManyObserver();
 
     while (iterator != list_observer_.end()) {
       (*iterator)->Update(message_);
@@ -60,11 +154,11 @@ public:
   }
 
   void CreateMessage(std::string message = "Empty") {
-    this->message_ = message;
+    this->message_ = std::move(message);
     Notify();
   }
 
-  void HowManyOberser() {
+  void HowManyObserver() {
     std::cout << "There are " << list_observer_.size() << " observers in the list.\n";
   }
 
@@ -84,15 +178,15 @@ private:
   std::string message_;
 };
 
-class Observer : public IObserver { 
+class Observer : public IObserver {
 public:
-  Observer(Subject &subject) : subject_(subject) {
+  explicit Observer(Subject &subject) : subject_(subject) {
     this->subject_.Attach(this);
     std::cout << "Hi, I'm the Observer \"" << ++Observer::static_number_ << "\".\n";
     this->number_ = Observer::static_number_;
   }
 
-  virtual ~Observer() {
+  ~Observer() override {
     std::cout << "Goodbye, I was the Observer \"" << this->number_ << "\".\n";
   }
 
@@ -100,7 +194,7 @@ public:
     message_from_subject_ = message_from_subject;
     PrintInfo();
   }
-  
+
   void RemoveMeFromTheList() {
     subject_.Detach(this);
     std::cout << "Observer \"" << this->number_ << "\" removed from the list.\n";
@@ -108,7 +202,7 @@ public:
 
   void PrintInfo() {
     std::cout << "Observer \"" << this->number_ << "\": a new message is available --> "
-      << this->message_from_subject_ << "\n";
+              << this->message_from_subject_ << "\n";
   }
 
 private:
@@ -121,12 +215,12 @@ private:
 int Observer::static_number_ = 0;
 
 void ClientCode() {
-  Subject *subject = new Subject;
-  Observer *observer1 = new Observer(*subject);
-  Observer *observer2 = new Observer(*subject);
-  Observer *observer3 = new Observer(*subject);
-  Observer *observer4;
-  Observer *observer5;
+  auto *subject = new Subject;
+  auto *observer1 = new Observer{*subject};
+  auto *observer2 = new Observer{*subject};
+  auto *observer3 = new Observer{*subject};
+  auto *observer4 = new Observer{*subject};
+  auto *observer5 = new Observer{*subject};
 
   subject->CreateMessage("Hello World! :D");
   observer3->RemoveMeFromTheList();
@@ -136,7 +230,7 @@ void ClientCode() {
 
   subject->CreateMessage("My new car is great! ;)");
   observer5->RemoveMeFromTheList();
-  
+
   observer4->RemoveMeFromTheList();
   observer1->RemoveMeFromTheList();
 
@@ -148,9 +242,9 @@ void ClientCode() {
   delete subject;
 }
 
-int main()
-{
-  ClientCode();
+} // end of namespace observer_new
 
-  return 0;
+TEST(observer, new_demo) {
+  using namespace observer_new;
+  ClientCode();
 }

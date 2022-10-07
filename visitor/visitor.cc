@@ -1,7 +1,8 @@
+#include <gtest/gtest.h>
 #include <iostream>
-#include <string>
 #include <array>
 
+namespace visitor {
 /**
  * The Visitor Interface declares a set of visiting methods that correspond to
  * component classes. The signature of a visiting method allows the visitor to
@@ -16,7 +17,7 @@ public:
   virtual void VisitConcreteComponentA(const ConcreteComponentA *element) const = 0;
   virtual void VisitConcreteComponentB(const ConcreteComponentB *element) const = 0;
 
-  virtual ~Visitor() {}
+  virtual ~Visitor() = default;
 };
 
 /**
@@ -25,8 +26,9 @@ public:
  */
 class Component {
 public:
-  virtual ~Component() {}
   virtual void Accept(Visitor *visitor) const = 0;
+
+  virtual ~Component() = default;
 };
 
 /**
@@ -35,7 +37,7 @@ public:
  */
 class ConcreteComponentA : public Component {
   /**
-   * Not that we're claling `visitConcreteComponentA`, which matches the
+   * Not that we're calling `visitConcreteComponentA`, which matches the
    * current class name. This way we let the visitor know the class of the
    * component it works with.
    */
@@ -49,7 +51,7 @@ public:
    * class or itnerface. The Visitor is still able to use these methods since
    * it's aware of the compoent's concrete class.
    */
-  std::string ExclusiveMethodOfConcreteComponentA() const {
+  [[nodiscard]] std::string ExclusiveMethodOfConcreteComponentA() const {
     return "A";
   }
 };
@@ -62,7 +64,7 @@ public:
   void Accept(Visitor *visitor) const override {
     visitor->VisitConcreteComponentB(this);
   }
-  std::string SpecialMethodOfConcreteComponentB() const {
+  [[nodiscard]] std::string SpecialMethodOfConcreteComponentB() const {
     return "B";
   }
 };
@@ -110,18 +112,21 @@ void ClientCode(std::array<const Component *, 2> components, Visitor *visitor) {
   }
 }
 
-int main() {
+} // end of namespace visitor
+
+TEST(visitor, basic_demo) {
+  using namespace visitor;
+
   std::array<const Component *, 2> components = {
                                   new ConcreteComponentA,
                                   new ConcreteComponentB};
   std::cout << "the client code works with all visitors via the base Visitor interface:\n";
-  ConcreteVisitor1 *visitor1 = new ConcreteVisitor1;
+  auto *visitor1 = new ConcreteVisitor1;
   ClientCode(components, visitor1);
 
-  std::cout << "\n";
-  std::cout << "It allows the same client code to work with different types of visitors:\n";
+  std::cout << "\nIt allows the same client code to work with different types of visitors:\n";
 
-  ConcreteVisitor2 *visitor2 = new ConcreteVisitor2;
+  auto *visitor2 = new ConcreteVisitor2;
   ClientCode(components, visitor2);
 
   for (const Component *comp : components) {
@@ -130,7 +135,5 @@ int main() {
 
   delete visitor1;
   delete visitor2;
-
-  return 0;
 }
 

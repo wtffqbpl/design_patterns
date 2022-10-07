@@ -1,3 +1,4 @@
+#include <gtest/gtest.h>
 #include <iostream>
 #include <algorithm>
 #include <list>
@@ -5,33 +6,22 @@
 
 class Component {
 protected:
-  Component *parent_;
+  Component *parent_ = nullptr;
 
 public:
-  virtual ~Component() {}
-  void SetParent(Component *parent) {
-    this->parent_ = parent;
-  }
-
-  Component *GetParent() const {
-    return this->parent_;
-  }
+  virtual ~Component() = default;
+  void SetParent(Component *parent) { this->parent_ = parent; }
+  [[nodiscard]] Component &GetParent() const { return *this->parent_; }
+  [[nodiscard]] virtual bool IsComposite() const { return false; }
+  [[nodiscard]] virtual std::string Operation() const = 0;
 
   virtual void Add(Component *component) {}
   virtual void Remove(Component *component) {}
-
-  virtual bool IsComposite() const {
-    return false;
-  }
-
-  virtual std::string Operation() const = 0;
 };
 
 class Leaf : public Component {
 public:
-  std::string Operation() const override {
-    return "Leaf";
-  }
+  [[nodiscard]] std::string Operation() const override { return "Leaf"; }
 };
 
 class Composite : public Component {
@@ -49,20 +39,18 @@ public:
     component->SetParent(nullptr);
   }
 
-  bool IsComposite() const override {
+  [[nodiscard]] bool IsComposite() const override {
     return true;
   }
 
-  std::string Operation() const override {
+  [[nodiscard]] std::string Operation() const override {
     std::string result;
 
-    for (const Component *c : children_) {
-      if (c == children_.back()) {
+    for (const Component *c : children_)
+      if (c == children_.back())
         result += c->Operation();
-      } else {
+      else
         result += c->Operation() + "+";
-      }
-    }
 
     return "Branch(" + result + ")";
   }
@@ -80,23 +68,22 @@ void ClientCode2(Component *component1, Component *component2) {
   std::cout << "RESULT: " << component1->Operation();
 }
 
-int main()
-{
-  Component *simple = new Leaf;
+TEST(composite, basic_test){
+  Component *simple = new Leaf{};
   std::cout << "Client: I've got a simple component:\n'";
   ClientCode(simple);
   std::cout << "\n\n";
 
-  Component *tree = new Composite;
-  Component *branch1 = new Composite;
+  auto *tree = new Composite{};
+  auto *branch1 = new Composite{};
 
-  Component *leaf_1 = new Leaf;
-  Component *leaf_2 = new Leaf;
-  Component *leaf_3 = new Leaf;
+  auto *leaf_1 = new Leaf{};
+  auto *leaf_2 = new Leaf{};
+  auto *leaf_3 = new Leaf{};
 
   branch1->Add(leaf_1);
   branch1->Add(leaf_2);
-  Component *branch2 = new Composite;
+  auto *branch2 = new Composite{};
   branch2->Add(leaf_3);
   tree->Add(branch1);
   tree->Add(branch2);
@@ -104,7 +91,8 @@ int main()
   ClientCode(tree);
   std::cout << "\n\n";
 
-  std::cout << "Client: I don't need to check the components classes even when managing the tree:\n";
+  std::cout << "Client: I don't need to check the components classes "
+               "even when managing the tree:\n";
   ClientCode2(tree, simple);
   std::cout << "\n";
 
@@ -115,7 +103,4 @@ int main()
   delete leaf_1;
   delete leaf_2;
   delete leaf_3;
-
-  return 0;
 }
-
