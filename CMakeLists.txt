@@ -21,46 +21,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "-std=c++2a")
 enable_testing()
 
-file(GLOB_RECURSE cpp_design_patterns_srcs *.cc)
-add_executable(cpp_design_patterns
-        chain_of_responsibility/chain_of_responsibility_test.cc
-        command/command_test.cc
-        composite/composite_test.cc
-        decorator/decorator.cc
-        facade/facade.cc
-        flyweight/flyweight.cc
-        interpreter/interpreter.cc
-        iterator/iterator.cc
-        mediator/mediator.cc
-        memento/memento.cc
-        observer/observer.cc
-        prototype_pattern/prototype.cc
-        singleton/singleton.cc
-        state_pattern/state.cc
-        strategy/strategy.cc
-        template/template_pattern.cc
-        visitor/visitor.cc
-        )
-
-include_directories(include
-        chain_of_responsibility
-        command
-        composite
-        decorator
-        facade
-        flyweight
-        interpreter
-        iterator
-        mediator
-        memento
-        observer
-        prototype_pattern
-        singleton
-        state_pattern
-        strategy
-        template
-        visitor
-        )
+file(GLOB_RECURSE cpp_design_patterns_srcs ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc)
+add_executable(cpp_design_patterns ${cpp_design_patterns_srcs})
 
 target_link_libraries(
         cpp_design_patterns
