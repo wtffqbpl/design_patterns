@@ -1,3 +1,4 @@
+#include <gtest/gtest.h>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -104,12 +105,12 @@ void ClientCode(Handler &handler) {
 }
 
 /**
- * The other part of the client code constructs the actual chain.
+ * @brief The other part of the client code constructs the actual chain.
  */
-int main() {
-  MonkeyHandler *monkey = new MonkeyHandler;
-  SquirrelHandler *squirrel = new SquirrelHandler;
-  DogHandler *dog = new DogHandler;
+TEST(chain_of_responsibility, basic_test){
+  auto *monkey = new MonkeyHandler{};
+  auto *squirrel = new SquirrelHandler{};
+  auto *dog = new DogHandler{};
   monkey->SetNext(squirrel)->SetNext(dog);
 
   /**
@@ -125,6 +126,4 @@ int main() {
   delete monkey;
   delete squirrel;
   delete dog;
-
-  return 0;
 }
