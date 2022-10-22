@@ -113,6 +113,7 @@ public:
   virtual void Update(const std::string &message_from_subject) = 0;
 };
 
+// TODO: 利用模版来实现接口
 class ISubject {
 public:
   virtual ~ISubject() = default;

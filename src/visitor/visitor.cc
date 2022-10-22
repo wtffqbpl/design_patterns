@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <array>
+#include <unordered_map>
 
 namespace visitor {
 /**
@@ -32,7 +33,7 @@ public:
 };
 
 /**
- * Each Concrete Component must implement the `Accept` method in such a way taht
+ * Each Concrete Component must implement the `Accept` method in such a way that
  * it calls the visitor's method corresponding to the component's class.
  */
 class ConcreteComponentA : public Component {
@@ -48,8 +49,8 @@ public:
 
   /**
    * Concrete Components may have special methods that don't exist in their base
-   * class or itnerface. The Visitor is still able to use these methods since
-   * it's aware of the compoent's concrete class.
+   * class or interface. The Visitor is still able to use these methods since
+   * it's aware of the component's concrete class.
    */
   [[nodiscard]] std::string ExclusiveMethodOfConcreteComponentA() const {
     return "A";
@@ -137,3 +138,97 @@ TEST(visitor, basic_demo) {
   delete visitor2;
 }
 
+namespace visitor_factory {
+
+class ResourceFile {
+protected:
+  std::string file_path_;
+
+public:
+  enum class ResourceFileType : uint8_t { PDF, PPT, WORD };
+
+public:
+  explicit ResourceFile(std::string file_path) : file_path_(std::move(file_path)) {}
+  [[nodiscard]] virtual ResourceFileType getType() const = 0;
+};
+
+class PdfFile : public ResourceFile {
+public:
+  explicit PdfFile(std::string file_path) : ResourceFile(std::move(file_path)) {}
+  [[nodiscard]] ResourceFileType getType() const override {
+    return ResourceFileType::PDF;
+  }
+};
+
+class PPTFile : public ResourceFile {
+public:
+  explicit PPTFile(std::string file_path) : ResourceFile(std::move(file_path)) {}
+  [[nodiscard]] ResourceFileType getType() const override {
+    return ResourceFileType::PPT;
+  }
+};
+
+class WordFile : public ResourceFile {
+public:
+  explicit WordFile(std::string file_path) : ResourceFile(std::move(file_path)) {}
+  [[nodiscard]] ResourceFileType getType() const override {
+    return ResourceFileType::WORD;
+  }
+};
+
+class Extractor {
+public:
+  virtual void extract2txt(ResourceFile &res_file) = 0;
+};
+
+class PdfExtractor : public Extractor {
+public:
+  void extract2txt(ResourceFile &res_file) override {
+    std::cout << "pdf extractor.\n";
+  }
+};
+
+class PPTExtractor : public Extractor {
+public:
+  void extract2txt(ResourceFile &res_file) override {
+    std::cout << "PPT extractor.\n";
+  }
+};
+
+class WordExtractor : public Extractor {
+public:
+  void extract2txt(ResourceFile &res_file) override {
+    std::cout << "word extractor.\n";
+  }
+};
+
+class ExtractorFactory {
+private:
+  using ExtractorMap = std::unordered_map<ResourceFile::ResourceFileType, std::shared_ptr<Extractor>>;
+  inline static ExtractorMap maps_ = {
+      {ResourceFile::ResourceFileType::PDF,std::make_shared<PdfExtractor>(PdfExtractor{})},
+      {ResourceFile::ResourceFileType::PPT, std::make_shared<PPTExtractor>(PPTExtractor{})},
+      {ResourceFile::ResourceFileType::WORD, std::make_shared<WordExtractor>(WordExtractor{})}
+  };
+
+public:
+  static std::shared_ptr<Extractor> &getExtractor(ResourceFile::ResourceFileType type) {
+    return maps_.at(type);
+  }
+};
+
+}
+
+TEST(visitor, visitor_factory_demo) {
+  using namespace visitor_factory;
+
+  std::vector<std::shared_ptr<ResourceFile>> res_files;
+  res_files.emplace_back(std::make_shared<PdfFile>(PdfFile{"pdf"}));
+  res_files.emplace_back(std::make_shared<PPTFile>(PPTFile{"ppt"}));
+  res_files.emplace_back(std::make_shared<WordFile>(WordFile{"word"}));
+
+  for (auto &res : res_files) {
+    auto &extractor = ExtractorFactory::getExtractor(res->getType());
+    extractor->extract2txt(*res);
+  }
+}
