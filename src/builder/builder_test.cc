@@ -275,13 +275,36 @@ PersonJobBuilder PersonBuilderBase::works() const {
   return PersonJobBuilder{person};
 }
 
+class MailService {
+
+  class Email {
+  public:
+    std::string from, to, subject, body;
+
+    // possibly other members here
+  };
+
+  class EmailBuilder {
+    Email &email;
+
+  public:
+    explicit EmailBuilder(Email &email) : email{email} {}
+
+    EmailBuilder &from(std::string from) {
+      email.from = std::move(from);
+      return *this;
+    }
+  };
+
+};
+
 }
 
 TEST(builder_pattern, test1) {
   using namespace groovy_feature_builder;
 
   Person p = Person::create()
-                 .lives().at("123 Lodon Road")
+                 .lives().at("123 London Road")
                          .with_postcode("SW1 1GB")
                          .in("London")
                  .works().at("PragmaSoft")
@@ -296,13 +319,88 @@ TEST(builder_pattern, test1) {
   auto act_output = testing::internal::GetCapturedStdout();
 
   oss << "[\n"
-         "\t{street_address: 123 Lodon Road}\n"
+         "\t{street_address: 123 London Road}\n"
          "\t{post_code: SW1 1GB}\n"
          "\t{city: London}\n"
          "\t{company_name: PragmaSoft}\n"
          "\t{position: Consultant}\n"
          "\t{annual_income: 10000000}\n"
          "]\n";
+
+  EXPECT_EQ(oss.str(), act_output);
+}
+
+namespace builder_inheritance {
+
+class Person {
+public:
+  std::string name, position, date_of_birth;
+
+  friend std::ostream &operator<<(std::ostream &os, const Person &obj) {
+    return os << "name: " << obj.name
+              << " position: " << obj.position
+              << " date_of_birth: " << obj.date_of_birth;
+  }
+};
+
+class PersonBuilder {
+protected:
+  Person person;
+
+public:
+  [[nodiscard]] Person build() const { return person; }
+};
+
+template <typename TSelf>
+class PersonInfoBuilder : public PersonBuilder {
+public:
+  TSelf &called(const std::string &name) {
+    person.name = name;
+    return static_cast<TSelf&>(*this);
+    // alternatively, *static_cast<TSelf*>(this)
+  }
+};
+
+template <typename TSelf>
+class PersonJobBuilder : public PersonInfoBuilder<PersonJobBuilder<TSelf>> {
+public:
+  TSelf &works_as(const std::string &position) {
+    this->person.position = position;
+    return static_cast<TSelf&>(*this);
+  }
+};
+
+template <typename TSelf>
+class PersonBirthDateBuilder : public PersonJobBuilder<PersonBirthDateBuilder<TSelf>> {
+public:
+  TSelf &born_on(const std::string &date_of_birth) {
+    this->person.date_of_birth = date_of_birth;
+    return static_cast<TSelf&>(*this);
+  }
+};
+
+class MyBuilder : public PersonBirthDateBuilder<MyBuilder> {};
+
+} // namespace builder_inheritance
+
+TEST(builder_inheritance_test, test1) {
+  namespace bi = builder_inheritance;
+
+  std::stringstream oss;
+  testing::internal::CaptureStdout();
+
+  bi::MyBuilder mb;
+
+  auto me = mb.called("Dmitri")
+              .works_as("Programmer")
+              .born_on("01/01/1980")
+              .build();
+
+  std::cout << me << std::endl;
+
+  auto act_output = testing::internal::GetCapturedStdout();
+
+  oss << "name: Dmitri position: Programmer date_of_birth: 01/01/1980\n";
 
   EXPECT_EQ(oss.str(), act_output);
 }
